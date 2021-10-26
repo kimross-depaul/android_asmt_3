@@ -10,6 +10,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.kross.assignment3_kross.workers.DialogWorker;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener  {
 
     @Override
@@ -29,19 +31,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void addTicker() {
-
+        DialogWorker.list(this);
     }
 
     // ------------------ MENU ITEMS ---------------------
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         addTicker();
-
         return super.onOptionsItemSelected(item);
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.header_menu_items, menu);
+        getMenuInflater().inflate(R.menu.menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
 }

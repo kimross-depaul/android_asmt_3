@@ -1,4 +1,4 @@
-package com.kross.assignment3_kross.workers;
+package com.kross.assignment3_kross;
 
 import android.util.JsonWriter;
 
@@ -7,8 +7,9 @@ import java.io.StringWriter;
 
 public class Ticker {
     String symbol;
+    String companyName;
 
-    Ticker(String _symbol) {
+    public Ticker(String _symbol) {
         symbol = _symbol;
     }
 

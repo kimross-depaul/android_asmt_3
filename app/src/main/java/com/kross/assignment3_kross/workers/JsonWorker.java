@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import com.kross.assignment3_kross.Stock;
+import com.kross.assignment3_kross.Ticker;
 
 public class JsonWorker {
     private final static String FILENAME = "Stocks.json";
