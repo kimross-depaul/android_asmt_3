@@ -8,24 +8,27 @@ import androidx.appcompat.app.AlertDialog;
 
 public class DialogWorker {
 
-
-    public static void list(Activity activity) {
+    public static void list(Activity activity, DialogCompletion completion) {
         final CharSequence[] sArray = new CharSequence[20];
-        for (int i = 0; i < 20; i++)
-            sArray[i] = "Choice " + i;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("Make a selection");
+        NetworkWorker worker = new NetworkWorker((result) -> {
+            Log.d("DialogWorker", "--" + result);
+            for (int i = 0; i < 20; i++)
+                sArray[i] = "Choice " + i;
 
-        // Set the builder to display the string array as a selectable
-        // list, and add the "onClick" for when a selection is made
-        builder.setItems(sArray, (dialog, which) -> Log.d("DialogWorker", sArray[which] + ""));
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setTitle("Make a selection");
 
-        builder.setNegativeButton("Nevermind", (dialog, id) -> {
-            //tv2.setText(getString(R.string.nevermind_selected));
+            builder.setItems(sArray, (dialog, which) -> {
+                completion.getChoice(sArray[which].toString());
+            });
+
+            builder.setNegativeButton("Nevermind", (dialog, id) -> {});
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
         });
-        AlertDialog dialog = builder.create();
 
-        dialog.show();
+
     }
 }

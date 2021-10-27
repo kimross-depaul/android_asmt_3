@@ -31,7 +31,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void addTicker() {
-        DialogWorker.list(this);
+        DialogWorker.list(this, (choice) -> {
+            Log.d("MainActivity", "--Got the result " + choice);
+        });
     }
 
     // ------------------ MENU ITEMS ---------------------
