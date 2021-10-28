@@ -40,6 +40,7 @@ public class NetworkWorker implements Runnable {
 
             String line = "";
             while ((line = reader.readLine()) != null) {
+                Log.d("NetworkWorker", "--" + line);
                 sb.append(line).append('\n');
             }
 
@@ -48,6 +49,7 @@ public class NetworkWorker implements Runnable {
             conn.disconnect();
 
             Log.d("NetworkWorker", "--" + "closed connection");
+
             callback.getResult(sb.toString());
         } catch(Exception ex) {
             //AlertWorker.ok()

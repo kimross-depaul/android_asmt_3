@@ -6,29 +6,47 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class DialogWorker {
 
     public static void list(Activity activity, DialogCompletion completion) {
-        final CharSequence[] sArray = new CharSequence[20];
-
         NetworkWorker worker = new NetworkWorker((result) -> {
-            Log.d("DialogWorker", "--" + result);
-            for (int i = 0; i < 20; i++)
-                sArray[i] = "Choice " + i;
+            try {
+                JSONArray jary = new JSONArray(result);
+                CharSequence[] sArray = new CharSequence[jary.length()];
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-            builder.setTitle("Make a selection");
+                for (int i = 0; i < jary.length(); i++){
+                    JSONObject obj = (JSONObject)jary.getJSONObject(i);
+                    sArray[i] = obj.getString("symbol") + " - " + obj.getString("name");
+                }
 
-            builder.setItems(sArray, (dialog, which) -> {
-                completion.getChoice(sArray[which].toString());
-            });
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                builder.setTitle("Make a selection");
 
-            builder.setNegativeButton("Nevermind", (dialog, id) -> {});
+                builder.setItems(sArray, (dialog, which) -> {
+                    try {
+                        JSONObject obj = (JSONObject) jary.getJSONObject(which);
+                        completion.getChoice(obj.getString("symbol")); //sArray[which].toString());
+                    } catch (JSONException rjex) {
+                        Log.d("DialogWorker", "--A json parsing error occurred: " + rjex.getMessage());
+                    }
+                });
 
-            AlertDialog dialog = builder.create();
-            dialog.show();
+                builder.setNegativeButton("Nevermind", (dialog, id) -> {
+                });
+
+                activity.runOnUiThread(() -> {
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                });
+            } catch (JSONException jex){
+                Log.d("DialogWorker", "--A json parsing error occurred: " + jex.getMessage());
+            }
         });
 
-
+        new Thread(worker).start();
     }
 }
