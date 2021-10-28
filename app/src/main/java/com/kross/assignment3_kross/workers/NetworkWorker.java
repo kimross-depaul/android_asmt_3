@@ -10,16 +10,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class NetworkWorker implements Runnable {
-    private static final String TICKER_URL = "https://api.iextrading.com/1.0/ref-data/symbols";
-    private NetworkCompletion callback;
+    private String strURL;
+    private CompletionHandler callback;
 
-    public NetworkWorker(NetworkCompletion callback) {
+    public NetworkWorker(String strURL, CompletionHandler callback) {
+        this.strURL = strURL;
         this.callback = callback;
     }
 
     @Override
     public void run() {
-        Uri dataUri = Uri.parse(TICKER_URL);
+        Uri dataUri = Uri.parse(strURL);
         String urlToUse = dataUri.toString();
 
         StringBuilder sb = new StringBuilder();

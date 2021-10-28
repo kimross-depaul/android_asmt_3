@@ -20,7 +20,7 @@ import com.kross.assignment3_kross.Ticker;
 public class JsonWorker {
     private final static String FILENAME = "Stocks.json";
 
-    public static ArrayList<Ticker> load(Activity activity, ArrayList<Ticker> tickers) {
+    public static ArrayList<Stock> load(Activity activity, ArrayList<Stock> stocks) {
         try {
             ///activity.getApplicationContext().deleteFile(FILENAME);
             InputStream is = activity.getApplicationContext().openFileInput(FILENAME);
@@ -36,15 +36,15 @@ public class JsonWorker {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 String symbol = jsonObject.getString("symbol");
-                tickers.add(new Ticker(symbol));
+                stocks.add(new Stock(symbol));
             }
-            return tickers;
+            return stocks;
         } catch(Exception ex){
             Log.d("NoteWorker", "--Unable to load json file " + FILENAME + ":  " + ex.getMessage());
         }
-        return tickers;
+        return stocks;
     }
-    public static void save(ArrayList<Ticker> stocks, Activity activity) {
+    public static void save(ArrayList<Stock> stocks, Activity activity) {
         try {
             Log.d("JsonWorker", "--SAVING TO DISK");
             FileOutputStream fos = activity.getApplicationContext().
