@@ -1,5 +1,6 @@
 package com.kross.assignment3_kross;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +34,12 @@ public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
         Stock stock = stocks.get(position);
         holder.lblSymbol.setText(stock.symbol);
         holder.lblCompanyName.setText(stock.companyName);
-        holder.lblLatestPrice.setText(String.format("%2.f", stock.latestPrice));
-        holder.lblChange.setText(String.format("%.2f (%.2f%)", stock.change, stock.changePercent));
+        holder.lblLatestPrice.setText(String.format("%.2f", stock.latestPrice));
+        holder.lblChange.setText(arrow(stock.change) + String.format("%.2f (%.2f)", stock.change, stock.changePercent));
+    }
+
+    private String arrow(Double change) {
+        return change < 0 ? "▼" : "▲";
     }
 
     @Override

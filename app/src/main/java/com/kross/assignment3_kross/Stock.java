@@ -12,9 +12,9 @@ public class Stock {
     public Stock(String _symbol, String _companyName, Double _latestPrice, Double _change, Double _changePercent) {
         symbol = _symbol;
         companyName = _companyName;
-        latestPrice = _latestPrice != null ? 0 : _latestPrice;
-        change = _change != null ? 0 : _change;
-        changePercent = _changePercent != null ? 0 : _changePercent;
+        latestPrice = _latestPrice != null ? _latestPrice : 0;
+        change = _change != null ? _change: 0;
+        changePercent = _changePercent != null ? _changePercent : 0;
     }
     public Stock(String _symbol) {
         symbol = _symbol;
