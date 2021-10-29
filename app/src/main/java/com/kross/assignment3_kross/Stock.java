@@ -25,4 +25,6 @@ public class Stock {
     public String toString() {
         return symbol;
     }
+
+
 }

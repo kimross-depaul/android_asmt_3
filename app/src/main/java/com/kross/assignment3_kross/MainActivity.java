@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -24,6 +23,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener  {
     private final ArrayList<Stock> stocks = new ArrayList<Stock>();
+    private final String[] keys;
     private RecyclerView recyclerView;
     private StockAdapter adapter;
 
@@ -37,6 +37,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         adapter = new StockAdapter(stocks, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        JsonWorker.save(stocks, this);
     }
 
     @Override
@@ -61,7 +67,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private boolean stockExists(String symbol) {
-        return stocks.contains(symbol); //TODO
+        for (Stock stock: stocks) {
+            if (stock.symbol.equals(symbol)){
+                return true;
+            }
+        }
+        return false;
     }
 
     private void addStock(String json) {

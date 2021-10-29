@@ -1,5 +1,6 @@
 package com.kross.assignment3_kross;
 
+import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,11 +36,20 @@ public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
         holder.lblSymbol.setText(stock.symbol);
         holder.lblCompanyName.setText(stock.companyName);
         holder.lblLatestPrice.setText(String.format("%.2f", stock.latestPrice));
-        holder.lblChange.setText(arrow(stock.change) + String.format("%.2f (%.2f)", stock.change, stock.changePercent));
+        holder.lblChange.setText(arrow(stock.change) + String.format("%.2f (%.2f", stock.change, stock.changePercent) + "%)");
+        colorFields(stock.change, holder);
     }
 
     private String arrow(Double change) {
         return change < 0 ? "▼" : "▲";
+    }
+    private void colorFields(Double change, StockViewHolder holder) {
+        if (change < 0) {
+            holder.lblSymbol.setTextColor(Color.RED);
+            holder.lblCompanyName.setTextColor(Color.RED);
+            holder.lblLatestPrice.setTextColor(Color.RED);
+            holder.lblChange.setTextColor(Color.RED);
+        }
     }
 
     @Override
