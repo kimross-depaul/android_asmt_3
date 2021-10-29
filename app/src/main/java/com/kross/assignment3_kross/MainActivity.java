@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -23,9 +24,9 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener  {
     private final ArrayList<Stock> stocks = new ArrayList<Stock>();
-    private final String[] keys;
     private RecyclerView recyclerView;
     private StockAdapter adapter;
+    private SwipeRefreshLayout swipeRefresh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         adapter = new StockAdapter(stocks, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        swipeRefresh = findViewById(R.id.swipeRefresh);
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            public void onRefresh() {
+                refreshStocks();
+            }
+        });
     }
 
     @Override
@@ -106,6 +113,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }
     }
+
+    private void refreshStocks() {
+        StringBuilder sb = new StringBuilder();
+        for (Stock stock: stocks) {
+            sb.append(stock.symbol + ",");
+        }
+        Log.d("MainActivity", KeyWorker.getStockBatchUrl(sb.toString()));
+        //The above line has the batch-stock url, need to parse it... knowing it's a dictionary
+        /*
+            {
+                "A": {
+                    "quote": {
+                        "avgTotalVolume": 1329597,
+                        "calculationPrice": "close",
+                        "change": 0.5,
+                        "changePercent": 0.00322,
+                        "close": 155.76,
+                        ..
+                    }
+                },
+                "AA": {
+                    "quote": {
+                        "avgTotalVolume": 8654489,
+                        "calculationPrice": "close",
+                        "change": 0.66,
+                        "changePercent": 0.01441,
+                        "close": 46.45,
+                        ... etc.
+                     */
+        swipeRefresh.setRefreshing(false);
+    }
+
     // ------------------ MENU ITEMS ---------------------
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
