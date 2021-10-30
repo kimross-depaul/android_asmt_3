@@ -11,11 +11,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
 import com.kross.assignment3_kross.workers.DialogWorker;
 import com.kross.assignment3_kross.workers.JsonWorker;
 import com.kross.assignment3_kross.workers.KeyWorker;
 import com.kross.assignment3_kross.workers.NetworkWorker;
+import com.kross.assignment3_kross.workers.AlertWorker;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         adapter = new StockAdapter(stocks, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
+        recyclerView.setScrollbarFadingEnabled(false);
         swipeRefresh = findViewById(R.id.swipeRefresh);
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             public void onRefresh() {
@@ -62,6 +64,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public boolean onLongClick(View view) {
+        int pos = recyclerView.getChildLayoutPosition(view);
+        Stock stock = stocks.get(pos);
+        AlertWorker.okToDelete(MainActivity.this, "Delete Stock", "Delete Stock Symbol " + stock.symbol + "?", (dialog, id) -> {
+            stocks.remove(pos);
+            adapter.notifyItemRemoved(pos);
+        }, (dialog, id) -> {
+            //Cancelled - just return
+        });
         return false;
     }
 
@@ -110,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             runOnUiThread(() -> {
                 Log.d("MainActivity", "--Refreshing the adapter in place " + (stocks.size()-1));
                 adapter.notifyItemInserted(stocks.size() - 1);
-                adapter.notifyDataSetChanged();
+                //adapter.notifyDataSetChanged();
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -152,7 +162,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     // ------------------ MENU ITEMS ---------------------
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) { //TODO
+       /* AlertWorker.input(MainActivity.this, "StockSelection", "Please enter a Stock Symbol:", (dialog, id) -> {
+            EditText et = dialog.findViewById(R.id.inputSymbol);
+            Log.d("MainActivity", "--" + et.getText());// + et.getText());
+        }, (dialog, id) -> {
+            //user cancelled, just return
+        } );*/
         addTicker();
         return super.onOptionsItemSelected(item);
     }

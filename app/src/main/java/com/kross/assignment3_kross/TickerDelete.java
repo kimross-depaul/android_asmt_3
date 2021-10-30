@@ -5,11 +5,11 @@ import android.util.JsonWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class Ticker {
+public class TickerDelete {
     String symbol;
     String companyName;
 
-    public Ticker(String _symbol) {
+    public TickerDelete(String _symbol) {
         symbol = _symbol;
     }
 
