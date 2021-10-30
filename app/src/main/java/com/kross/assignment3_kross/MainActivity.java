@@ -34,16 +34,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         JsonWorker.load(this, stocks);
+        Log.d("MainActivity", "stocks loaded from json = " + stocks.size());
         recyclerView = findViewById(R.id.vwStocks);
         adapter = new StockAdapter(stocks, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
         swipeRefresh = findViewById(R.id.swipeRefresh);
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             public void onRefresh() {
                 refreshStocks();
             }
         });
+       refreshStocks();
     }
 
     @Override
@@ -107,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             runOnUiThread(() -> {
                 Log.d("MainActivity", "--Refreshing the adapter in place " + (stocks.size()-1));
                 adapter.notifyItemInserted(stocks.size() - 1);
-                //adapter.notifyDataSetChanged();
+                adapter.notifyDataSetChanged();
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -122,10 +125,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.d("MainActivity", KeyWorker.getStockBatchUrl(sb.toString()));
         NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(sb.toString()), (result) -> {
             refreshEachStock(result);
+            swipeRefresh.setRefreshing(false);
         });
 
         new Thread(worker).start();
-        swipeRefresh.setRefreshing(false);
+
     }
 
     private void refreshEachStock(String json) {

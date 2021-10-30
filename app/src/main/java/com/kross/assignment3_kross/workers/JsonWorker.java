@@ -22,13 +22,14 @@ public class JsonWorker {
 
     public static ArrayList<Stock> load(Activity activity, ArrayList<Stock> stocks) {
         try {
-            ///activity.getApplicationContext().deleteFile(FILENAME);
+            //activity.getApplicationContext().deleteFile(FILENAME);
             InputStream is = activity.getApplicationContext().openFileInput(FILENAME);
             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 
             String line;
             StringBuilder sb = new StringBuilder("");
             while ((line = reader.readLine()) != null) {
+                Log.d("JsonWorker", "-- line:" + line);
                 sb.append(line);
             }
             JSONArray jsonArray = new JSONArray(sb.toString());

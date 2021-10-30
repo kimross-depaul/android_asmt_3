@@ -1,6 +1,11 @@
 package com.kross.assignment3_kross;
 
+import android.util.JsonWriter;
+
 import androidx.annotation.NonNull;
+
+import java.io.IOException;
+import java.io.StringWriter;
 
 public class Stock {
     String symbol;
@@ -23,6 +28,18 @@ public class Stock {
     @NonNull
     @Override
     public String toString() {
+        try {
+            StringWriter writer = new StringWriter();
+            JsonWriter jsonWriter = new JsonWriter(writer);
+            jsonWriter.setIndent("   ");
+            jsonWriter.beginObject();
+            jsonWriter.name("symbol").value(this.symbol);
+            jsonWriter.endObject();
+            jsonWriter.close();
+            return writer.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return symbol;
     }
 

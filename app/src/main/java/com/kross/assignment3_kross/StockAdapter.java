@@ -35,9 +35,13 @@ public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
         Stock stock = stocks.get(position);
         holder.lblSymbol.setText(stock.symbol);
         holder.lblCompanyName.setText(stock.companyName);
-        holder.lblLatestPrice.setText(String.format("%.2f", stock.latestPrice));
-        holder.lblChange.setText(arrow(stock.change) + String.format("%.2f (%.2f", stock.change, stock.changePercent) + "%)");
-        colorFields(stock.change, holder);
+        holder.lblLatestPrice.setText(String.format("%.2f", stock.latestPrice != null ? stock.latestPrice : 0));
+        Double change = stock.change != null ? stock.change : 0;
+        holder.lblChange.setText(arrow(change) + String.format("%.2f (%.2f",
+                change,
+                stock.changePercent != null ? stock.changePercent : 0
+        ) + "%)");
+        colorFields(change, holder);
     }
 
     private String arrow(Double change) {
