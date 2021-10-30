@@ -20,15 +20,18 @@ public class AlertWorker {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle(title);
         builder.setMessage(message);
-        builder.setPositiveButton(okButtonTitle, okBehavior);
+
+        if (okBehavior != null)
+            builder.setPositiveButton(okButtonTitle, okBehavior);
         if (cancelBehavior != null)
             builder.setNegativeButton(cancelButtonTitle, cancelBehavior);
-
         if (icon != null)
             builder.setIcon(icon);
 
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        activity.runOnUiThread(() -> {
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        });
     }
     public static void okToDelete(Activity activity, String title, String message,
                                   DialogInterface.OnClickListener okBehavior,
@@ -38,6 +41,9 @@ public class AlertWorker {
     public static void ok(Activity activity, String title, String message,
                           DialogInterface.OnClickListener okBehavior) {
         okCancel(activity, title, message, okBehavior, null, "OK", "", null);
+    }
+    public static void info(Activity activity, String title, String message) {
+        okCancel(activity, title, message, null, null, "", "", null);
     }
 
     public static void input(Activity activity, String title, String message,

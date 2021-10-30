@@ -80,7 +80,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d("MainActivity", "--Got the result " + choice);
             //Do other network call
             NetworkWorker worker = new NetworkWorker(KeyWorker.getStockUrl(choice), (result) -> {
-                addStock(result);
+                if (result != null) {
+                    addStock(result);
+                }else {
+                    AlertWorker.info( MainActivity.this, "No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" );
+                }
             });
             new Thread(worker).start();
         });
@@ -134,12 +138,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         Log.d("MainActivity", KeyWorker.getStockBatchUrl(sb.toString()));
         NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(sb.toString()), (result) -> {
-            refreshEachStock(result);
+            if (result != null) {
+                refreshEachStock(result);
+            }else {
+                AlertWorker.info( MainActivity.this,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" );
+            }
             swipeRefresh.setRefreshing(false);
         });
 
         new Thread(worker).start();
-
     }
 
     private void refreshEachStock(String json) {

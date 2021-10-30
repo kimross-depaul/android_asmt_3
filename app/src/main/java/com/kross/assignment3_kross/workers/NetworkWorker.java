@@ -3,6 +3,8 @@ package com.kross.assignment3_kross.workers;
 import android.net.Uri;
 import android.util.Log;
 
+import com.kross.assignment3_kross.MainActivity;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,7 +43,6 @@ public class NetworkWorker implements Runnable {
 
             String line = "";
             while ((line = reader.readLine()) != null) {
-                Log.d("NetworkWorker", "--" + line);
                 sb.append(line).append('\n');
             }
 
@@ -55,6 +56,7 @@ public class NetworkWorker implements Runnable {
         } catch(Exception ex) {
             //AlertWorker.ok()
             Log.d("NetworkWorker", "--An Error occurred: " + ex.getMessage());
+            callback.getResult(null);
         }
     }
 }
