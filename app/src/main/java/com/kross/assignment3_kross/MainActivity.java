@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             runOnUiThread(() -> {
                 Log.d("MainActivity", "--Refreshing the adapter in place " + (stocks.size()-1));
                 adapter.notifyItemInserted(stocks.size() - 1);
-                adapter.notifyDataSetChanged();
+                //adapter.notifyDataSetChanged();
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -120,31 +120,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             sb.append(stock.symbol + ",");
         }
         Log.d("MainActivity", KeyWorker.getStockBatchUrl(sb.toString()));
-        //The above line has the batch-stock url, need to parse it... knowing it's a dictionary
-        /*
-            {
-                "A": {
-                    "quote": {
-                        "avgTotalVolume": 1329597,
-                        "calculationPrice": "close",
-                        "change": 0.5,
-                        "changePercent": 0.00322,
-                        "close": 155.76,
-                        ..
-                    }
-                },
-                "AA": {
-                    "quote": {
-                        "avgTotalVolume": 8654489,
-                        "calculationPrice": "close",
-                        "change": 0.66,
-                        "changePercent": 0.01441,
-                        "close": 46.45,
-                        ... etc.
-                     */
+        NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(sb.toString()), (result) -> {
+            refreshEachStock(result);
+        });
+
+        new Thread(worker).start();
         swipeRefresh.setRefreshing(false);
     }
 
+    private void refreshEachStock(String json) {
+        try {
+            JSONObject root = new JSONObject(json);
+
+            for (int i = 0; i < stocks.size(); i++) {
+                Stock stock = stocks.get(i);
+                JSONObject thisStock = (JSONObject) root.get(stock.symbol);
+                JSONObject quote = (JSONObject) thisStock.get("quote");
+                Stock freshStock = new Stock(quote.getString("symbol"), quote.getString("companyName"), quote.getDouble("latestPrice"), quote.getDouble("change"), quote.getDouble("changePercent"));
+                stocks.set(i, freshStock);
+            }
+            runOnUiThread(() -> {
+                adapter.notifyDataSetChanged();
+            });
+        } catch (JSONException jex) {
+            Log.d("MainActivity", "-- Couldn't read batch:  " + jex.getMessage());
+        }
+    }
     // ------------------ MENU ITEMS ---------------------
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {

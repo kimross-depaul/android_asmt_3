@@ -44,12 +44,12 @@ public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
         return change < 0 ? "▼" : "▲";
     }
     private void colorFields(Double change, StockViewHolder holder) {
-        if (change < 0) {
-            holder.lblSymbol.setTextColor(Color.RED);
-            holder.lblCompanyName.setTextColor(Color.RED);
-            holder.lblLatestPrice.setTextColor(Color.RED);
-            holder.lblChange.setTextColor(Color.RED);
-        }
+        int color = change < 0 ? Color.RED : Color.GREEN;
+
+        holder.lblSymbol.setTextColor(color);
+        holder.lblCompanyName.setTextColor(color);
+        holder.lblLatestPrice.setTextColor(color);
+        holder.lblChange.setTextColor(color);
     }
 
     @Override
