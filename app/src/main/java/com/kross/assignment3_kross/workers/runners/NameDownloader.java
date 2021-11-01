@@ -1,62 +1,126 @@
 package com.kross.assignment3_kross.workers.runners;
 
+import android.app.Activity;
 import android.util.Log;
 
-import com.kross.assignment3_kross.MainActivity;
+import androidx.appcompat.app.AlertDialog;
+
 import com.kross.assignment3_kross.Stock;
 import com.kross.assignment3_kross.StockCollection;
 import com.kross.assignment3_kross.workers.AlertWorker;
+import com.kross.assignment3_kross.workers.CompletionHandler;
 import com.kross.assignment3_kross.workers.KeyWorker;
 import com.kross.assignment3_kross.workers.NetworkWorker;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-public class NameDownloader implements Runnable {
-    public final StockCollection stocks = new StockCollection();
-    private MainActivity activity;
+public class NameDownloader {
+    private StockCollection stocks;
+    private Activity activity;
 
-    public NameDownloader(MainActivity _activity) {
+    public NameDownloader(Activity _activity) {
         this.activity = _activity;
+        stocks = new StockCollection();
     }
 
-    @Override
-    public void run() {
-        refreshStocks();
+    public void list(String searchString, CompletionHandler completion) {
+        if (stocks.size() == 0) {
+            launchDialog(searchString, completion);
+        }else {
+            launchCachedDialog(searchString, completion);
+        }
     }
 
-    public void refreshStocks() {
-        String delimitedStocks = stocks.getDelimitedSymbols();
-        Log.d("MainActivity", KeyWorker.getStockBatchUrl(delimitedStocks));
-        if (delimitedStocks == "")
-            return;
-        NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(delimitedStocks), (result) -> {
-            if (result != null) {
-                refreshEachStock(result);
-            }else {
+    private void launchDialog(String searchString, CompletionHandler completion) {
+        NetworkWorker worker = new NetworkWorker(KeyWorker.getTickerUrl(), (result) -> {
+            if (result != null && result != "!") {
+                try {
+                    JSONArray jary = new JSONArray(result);
+                    convertJaryToHash(jary);
+                    String[] sArray = filter(searchString);
+
+                    //REPORT IF NOTHING MATCHES YOUR SEARCH
+                    if (sArray.length == 0) {
+                        AlertWorker.info(activity, "Symbol Not Found:  " + searchString, "Data for stock symbol", null);
+                        completion.getResult("");
+                        return;
+                    }
+                    if (sArray.length == 1) {
+                        completion.getResult(searchString);
+                    }else {
+                        populateChoices(sArray, searchString, completion);
+                    }
+
+                } catch (JSONException jex) {
+                    Log.d("DialogWorker", "--A json parsing error occurred: " + jex.getMessage());
+                }
+            } else {
                 AlertWorker.info( activity,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
             }
-            activity.swipeRefresh.setRefreshing(false);
         });
 
         new Thread(worker).start();
     }
-    private void refreshEachStock(String json) {
-        try {
-            JSONObject root = new JSONObject(json);
-
-            for (String symbol: stocks.keys()) {
-                Stock stock = stocks.getByKey(symbol);
-                JSONObject thisStock = (JSONObject) root.get(stock.symbol);
-                JSONObject quote = (JSONObject) thisStock.get("quote");
-                Stock freshStock = new Stock(quote.getString("symbol"), quote.getString("companyName"), quote.getDouble("latestPrice"), quote.getDouble("change"), quote.getDouble("changePercent"));
-                stocks.put(freshStock);
+    private void convertJaryToHash(JSONArray jary) {
+        for(int i = 0 ; i < jary.length(); i++) {
+            JSONObject obj = null;
+            try {
+                obj = (JSONObject) jary.getJSONObject(i);
+                String symbol = obj.getString("symbol");
+                String name = obj.getString("name");
+                stocks.put(new Stock(symbol, name), false);
+                //Log.d("DialogWorker", "Just put symbol " + symbol + " to the list");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-            activity.runOnUiThread(() -> {
-                activity.adapter.notifyDataSetChanged();
-            });
-        } catch (JSONException jex) {
-            Log.d("MainActivity", "-- Couldn't read batch:  " + jex.getMessage());
         }
+        stocks.reOrder();
+    }
+
+    private String[] filter( String searchString) {
+        //FILTER THE JSON RESPONSE (LIST OF TICKERS) PER YOUR SEARCH
+        ArrayList<String> tempArray = new ArrayList<String>();
+        String[] temp = stocks.keyArray();
+        temp = Arrays.stream(temp).filter(s -> s.startsWith(searchString)).toArray(String[]::new);
+        return temp;
+    }
+    private void launchCachedDialog(String searchString, CompletionHandler completion) {
+        Log.d("DialogWorker", "--BEFORE populating cached choices: " + stocks.keyArray());
+        Log.d("DialogWorker", "--stocks[0].name" + stocks.getByIndex(0).companyName);
+        String[] sArray = filter(searchString);
+        populateChoices(sArray, searchString, completion);
+    }
+
+    private void populateChoices(String[] sArray, String searchString, CompletionHandler completion) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle("Make a selection");
+
+        //SET THE ITEMS FOR THE USER TO CHOOSE FROM
+        String[] finalSArray = sArray;
+        builder.setItems(sArray, (dialog, which) -> {
+            Log.d("DialogWorker", "--setting items closure");
+            try {
+                String choice = finalSArray[which];
+                completion.getResult(choice.split(" -")[0]);
+            } catch (Exception ex) {
+                Log.d("DialogWorker", "--An unexpected error occurred: " + ex.getMessage());
+            }
+        });
+
+        builder.setNegativeButton("Nevermind", (dialog, id) -> {
+        });
+
+        activity.runOnUiThread(() -> {
+            Log.d("DialogWorker", "--creating dialog to show");
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            Log.d("DialogWorker", "--showing the dialog");
+        });
     }
 }

@@ -11,25 +11,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 
-import com.kross.assignment3_kross.workers.DialogWorker;
+import com.kross.assignment3_kross.workers.runners.NameDownloader;
 import com.kross.assignment3_kross.workers.JsonWorker;
 import com.kross.assignment3_kross.workers.KeyWorker;
 import com.kross.assignment3_kross.workers.NetworkWorker;
 import com.kross.assignment3_kross.workers.AlertWorker;
-import com.kross.assignment3_kross.workers.runners.NameDownloader;
 import com.kross.assignment3_kross.workers.runners.StockDownloader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener  {
    // private final HashMap<String, Stock> stocks = new HashMap<String, Stock>();
-    private DialogWorker dialogWorker;
+    private NameDownloader nameDownloader;
     private StockDownloader stockDownloader;
     public RecyclerView recyclerView;
 
@@ -41,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         stockDownloader = new StockDownloader(this);
-        dialogWorker = new DialogWorker(this);
+        nameDownloader = new NameDownloader(this);
         JsonWorker.load(this, stockDownloader.stocks);
 
         Log.d("MainActivity", "stocks loaded from json = " + stockDownloader.stocks.size());
@@ -53,10 +48,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         swipeRefresh = findViewById(R.id.swipeRefresh);
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             public void onRefresh() {
-                stockDownloader.refreshStocks();
+                new Thread(stockDownloader).start();
             }
         });
-       stockDownloader.refreshStocks();
+       new Thread(stockDownloader).start();
     }
 
     @Override
@@ -84,9 +79,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void addTicker(String searchString) {
-        dialogWorker.list(searchString, (choice) -> {
+        nameDownloader.list(searchString, (choice) -> {
             Log.d("MainActivity", "--Got the result " + choice);
             NetworkWorker worker = new NetworkWorker(KeyWorker.getStockUrl(choice), (result) -> {
+                Log.d("MainActivity", "---THIS IS WHAT I GOT" + result);
                 if (result != null && result != "") {
                     addStock(result);
                 } else if (result == "!") {
