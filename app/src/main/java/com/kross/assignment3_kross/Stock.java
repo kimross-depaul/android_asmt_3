@@ -23,25 +23,9 @@ public class Stock {
     }
     public Stock(String _symbol) {
         symbol = _symbol;
+        companyName = "";
+        latestPrice = 0.0;
+        change = 0.0;
+        changePercent = 0.0;
     }
-
-    @NonNull
-    @Override
-    public String toString() {
-        try {
-            StringWriter writer = new StringWriter();
-            JsonWriter jsonWriter = new JsonWriter(writer);
-            jsonWriter.setIndent("   ");
-            jsonWriter.beginObject();
-            jsonWriter.name("symbol").value(this.symbol);
-            jsonWriter.endObject();
-            jsonWriter.close();
-            return writer.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return symbol;
-    }
-
-
 }

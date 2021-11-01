@@ -47,8 +47,7 @@ public class AlertWorker {
     }
 
     public static void input(Activity activity, String title, String message,
-                             DialogInterface.OnClickListener okBehavior,
-                             DialogInterface.OnClickListener cancelBehavior) {
+                             CompletionHandler completion) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
@@ -61,9 +60,12 @@ public class AlertWorker {
 
         builder.setTitle(title);
         builder.setMessage(message);
-        builder.setPositiveButton("OK", okBehavior);
-        if (cancelBehavior != null)
-            builder.setNegativeButton("Cancel", cancelBehavior);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                completion.getResult(et.getText().toString());
+            }
+        });
 
         AlertDialog dialog = builder.create();
         dialog.show();

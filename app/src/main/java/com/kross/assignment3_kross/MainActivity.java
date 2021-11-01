@@ -23,9 +23,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener  {
-    private final ArrayList<Stock> stocks = new ArrayList<Stock>();
+   // private final HashMap<String, Stock> stocks = new HashMap<String, Stock>();
+    private final StockCollection stocks = new StockCollection();
     private RecyclerView recyclerView;
     private StockAdapter adapter;
     private SwipeRefreshLayout swipeRefresh;
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         JsonWorker.load(this, stocks);
+
         Log.d("MainActivity", "stocks loaded from json = " + stocks.size());
         recyclerView = findViewById(R.id.vwStocks);
         adapter = new StockAdapter(stocks, this);
@@ -54,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
-        JsonWorker.save(stocks, this);
+        JsonWorker.save(stocks, this); //TODO
     }
 
     @Override
@@ -65,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public boolean onLongClick(View view) {
         int pos = recyclerView.getChildLayoutPosition(view);
-        Stock stock = stocks.get(pos);
+        Stock stock = stocks.getByIndex(pos);
         AlertWorker.okToDelete(MainActivity.this, "Delete Stock", "Delete Stock Symbol " + stock.symbol + "?", (dialog, id) -> {
             stocks.remove(pos);
             adapter.notifyItemRemoved(pos);
@@ -75,12 +78,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
-    private void addTicker() {
-        DialogWorker.list(this, (choice) -> {
+    private void addTicker(String searchString) {
+        DialogWorker.list(this, searchString, (choice) -> {
             Log.d("MainActivity", "--Got the result " + choice);
             //Do other network call
+
+            Log.d("MainActivity", "-- getting details for choice");
             NetworkWorker worker = new NetworkWorker(KeyWorker.getStockUrl(choice), (result) -> {
-                if (result != null) {
+                if (result != null && result != "") {
                     addStock(result);
                 }else {
                     AlertWorker.info( MainActivity.this, "No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" );
@@ -91,12 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private boolean stockExists(String symbol) {
-        for (Stock stock: stocks) {
-            if (stock.symbol.equals(symbol)){
-                return true;
-            }
-        }
-        return false;
+        return stocks.containsKey(symbol);
     }
 
     private void addStock(String json) {
@@ -120,11 +120,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Double change = obj.getDouble("change");
             Double changePercent = obj.getDouble("changePercent");
             Stock stock = new Stock(symbol, companyName, latestPrice, change, changePercent);
-            stocks.add(stock);
+            stocks.put(stock);
             runOnUiThread(() -> {
                 Log.d("MainActivity", "--Refreshing the adapter in place " + (stocks.size()-1));
-                adapter.notifyItemInserted(stocks.size() - 1);
-                //adapter.notifyDataSetChanged();
+                //adapter.notifyItemInserted(stocks.size() - 1);
+                adapter.setNeedsReorder();
+                adapter.notifyDataSetChanged();
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -132,12 +133,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void refreshStocks() {
-        StringBuilder sb = new StringBuilder();
-        for (Stock stock: stocks) {
-            sb.append(stock.symbol + ",");
-        }
-        Log.d("MainActivity", KeyWorker.getStockBatchUrl(sb.toString()));
-        NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(sb.toString()), (result) -> {
+        String delimitedStocks = stocks.getDelimitedSymbols();
+        Log.d("MainActivity", KeyWorker.getStockBatchUrl(delimitedStocks));
+        if (delimitedStocks == "")
+            return;
+        NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(delimitedStocks), (result) -> {
             if (result != null) {
                 refreshEachStock(result);
             }else {
@@ -153,12 +153,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             JSONObject root = new JSONObject(json);
 
-            for (int i = 0; i < stocks.size(); i++) {
-                Stock stock = stocks.get(i);
+            for (String symbol: stocks.keys()) {
+                Stock stock = stocks.getByKey(symbol);
                 JSONObject thisStock = (JSONObject) root.get(stock.symbol);
                 JSONObject quote = (JSONObject) thisStock.get("quote");
                 Stock freshStock = new Stock(quote.getString("symbol"), quote.getString("companyName"), quote.getDouble("latestPrice"), quote.getDouble("change"), quote.getDouble("changePercent"));
-                stocks.set(i, freshStock);
+                stocks.put(freshStock);
             }
             runOnUiThread(() -> {
                 adapter.notifyDataSetChanged();
@@ -170,13 +170,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // ------------------ MENU ITEMS ---------------------
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) { //TODO
-       /* AlertWorker.input(MainActivity.this, "StockSelection", "Please enter a Stock Symbol:", (dialog, id) -> {
-            EditText et = dialog.findViewById(R.id.inputSymbol);
-            Log.d("MainActivity", "--" + et.getText());// + et.getText());
-        }, (dialog, id) -> {
-            //user cancelled, just return
-        } );*/
-        addTicker();
+        AlertWorker.input(MainActivity.this, "StockSelection", "Please enter a Stock Symbol:", (result) -> {
+            Log.d("MainActivity", result);
+            addTicker(result);
+        });
+
         return super.onOptionsItemSelected(item);
     }
     @Override
