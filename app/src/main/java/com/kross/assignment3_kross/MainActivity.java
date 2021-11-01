@@ -18,6 +18,8 @@ import com.kross.assignment3_kross.workers.JsonWorker;
 import com.kross.assignment3_kross.workers.KeyWorker;
 import com.kross.assignment3_kross.workers.NetworkWorker;
 import com.kross.assignment3_kross.workers.AlertWorker;
+import com.kross.assignment3_kross.workers.runners.NameDownloader;
+import com.kross.assignment3_kross.workers.runners.StockDownloader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,37 +29,40 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener  {
    // private final HashMap<String, Stock> stocks = new HashMap<String, Stock>();
-    private final StockCollection stocks = new StockCollection();
-    private RecyclerView recyclerView;
-    private StockAdapter adapter;
-    private SwipeRefreshLayout swipeRefresh;
+    private DialogWorker dialogWorker;
+    private StockDownloader stockDownloader;
+    public RecyclerView recyclerView;
+
+    public StockAdapter adapter;
+    public SwipeRefreshLayout swipeRefresh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        stockDownloader = new StockDownloader(this);
+        dialogWorker = new DialogWorker(this);
+        JsonWorker.load(this, stockDownloader.stocks);
 
-        JsonWorker.load(this, stocks);
-
-        Log.d("MainActivity", "stocks loaded from json = " + stocks.size());
+        Log.d("MainActivity", "stocks loaded from json = " + stockDownloader.stocks.size());
         recyclerView = findViewById(R.id.vwStocks);
-        adapter = new StockAdapter(stocks, this);
+        adapter = new StockAdapter(stockDownloader.stocks, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setScrollbarFadingEnabled(false);
         swipeRefresh = findViewById(R.id.swipeRefresh);
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             public void onRefresh() {
-                refreshStocks();
+                stockDownloader.refreshStocks();
             }
         });
-       refreshStocks();
+       stockDownloader.refreshStocks();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        JsonWorker.save(stocks, this); //TODO
+        JsonWorker.save(stockDownloader.stocks, this); //TODO
     }
 
     @Override
@@ -68,9 +73,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public boolean onLongClick(View view) {
         int pos = recyclerView.getChildLayoutPosition(view);
-        Stock stock = stocks.getByIndex(pos);
+        Stock stock = stockDownloader.stocks.getByIndex(pos);
         AlertWorker.okToDelete(MainActivity.this, "Delete Stock", "Delete Stock Symbol " + stock.symbol + "?", (dialog, id) -> {
-            stocks.remove(pos);
+            stockDownloader.stocks.remove(pos);
             adapter.notifyItemRemoved(pos);
         }, (dialog, id) -> {
             //Cancelled - just return
@@ -78,8 +83,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
+    //TODO need to have this NOT launch a new GET if namedownloader already has cached data
     private void addTicker(String searchString) {
-        DialogWorker.list(this, searchString, (choice) -> {
+        dialogWorker.list(searchString, (choice) -> {
             Log.d("MainActivity", "--Got the result " + choice);
             NetworkWorker worker = new NetworkWorker(KeyWorker.getStockUrl(choice), (result) -> {
                 if (result != null && result != "") {
@@ -95,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private boolean stockExists(String symbol) {
-        return stocks.containsKey(symbol);
+        return stockDownloader.stocks.containsKey(symbol);
     }
 
     private void addStock(String json) {
@@ -120,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Double change = obj.getDouble("change");
             Double changePercent = obj.getDouble("changePercent");
             Stock stock = new Stock(symbol, companyName, latestPrice, change, changePercent);
-            stocks.put(stock);
+            stockDownloader.stocks.put(stock);
             runOnUiThread(() -> {
                 adapter.notifyDataSetChanged();
             });
@@ -129,41 +135,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void refreshStocks() {
-        String delimitedStocks = stocks.getDelimitedSymbols();
-        Log.d("MainActivity", KeyWorker.getStockBatchUrl(delimitedStocks));
-        if (delimitedStocks == "")
-            return;
-        NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(delimitedStocks), (result) -> {
-            if (result != null) {
-                refreshEachStock(result);
-            }else {
-                AlertWorker.info( MainActivity.this,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
-            }
-            swipeRefresh.setRefreshing(false);
-        });
 
-        new Thread(worker).start();
-    }
 
-    private void refreshEachStock(String json) {
-        try {
-            JSONObject root = new JSONObject(json);
 
-            for (String symbol: stocks.keys()) {
-                Stock stock = stocks.getByKey(symbol);
-                JSONObject thisStock = (JSONObject) root.get(stock.symbol);
-                JSONObject quote = (JSONObject) thisStock.get("quote");
-                Stock freshStock = new Stock(quote.getString("symbol"), quote.getString("companyName"), quote.getDouble("latestPrice"), quote.getDouble("change"), quote.getDouble("changePercent"));
-                stocks.put(freshStock);
-            }
-            runOnUiThread(() -> {
-                adapter.notifyDataSetChanged();
-            });
-        } catch (JSONException jex) {
-            Log.d("MainActivity", "-- Couldn't read batch:  " + jex.getMessage());
-        }
-    }
     // ------------------ MENU ITEMS ---------------------
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) { //TODO

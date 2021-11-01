@@ -6,74 +6,53 @@ import android.util.Log;
 import androidx.appcompat.app.AlertDialog;
 import com.kross.assignment3_kross.R;
 import com.kross.assignment3_kross.MainActivity;
+import com.kross.assignment3_kross.Stock;
+import com.kross.assignment3_kross.StockCollection;
+import com.kross.assignment3_kross.workers.runners.NameDownloader;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class DialogWorker {
+    private StockCollection stocks;
+    private Activity activity;
 
-    public static void list(Activity activity, String searchString, CompletionHandler completion) {
+    public DialogWorker(Activity _activity) {
+        this.activity = _activity;
+        stocks = new StockCollection();
+    }
+
+    public void list(String searchString, CompletionHandler completion) {
+        if (stocks.size() == 0) {
+            launchDialog(searchString, completion);
+        }else {
+            launchCachedDialog(searchString, completion);
+        }
+    }
+
+    private void launchDialog(String searchString, CompletionHandler completion) {
         NetworkWorker worker = new NetworkWorker(KeyWorker.getTickerUrl(), (result) -> {
             if (result != null) {
                 try {
                     JSONArray jary = new JSONArray(result);
-                    ArrayList<String> tempArray = new ArrayList<String>();
-                    Boolean foundOne = false;
-
-                    //FILTER THE JSON RESPONSE (LIST OF TICKERS) PER YOUR SEARCH
-                    for (int i = 0; i < jary.length(); i++) {
-                        JSONObject obj = (JSONObject) jary.getJSONObject(i);
-                        if (obj.getString("symbol").contains(searchString)) {
-                            tempArray.add(obj.getString("symbol") + " - " + obj.getString("name"));
-                            //sArray[i] = obj.getString("symbol") + " - " + obj.getString("name");
-                            foundOne = true;
-                        }
-                    }
-                    String[] sArray = new String[tempArray.size()];
-                    sArray = tempArray.toArray(sArray);
+                    convertJaryToHash(jary);
+                    String[] sArray = filter(searchString);
 
                     //REPORT IF NOTHING MATCHES YOUR SEARCH
-                    if (!foundOne) {
+                    if (sArray.length == 0) {
                         AlertWorker.info(activity, "Symbol Not Found:  " + searchString, "Data for stock symbol", null);
                         completion.getResult("");
                         return;
                     }
-                    //ASK THE USER WHICH ONE (IF WE GOT MULTIPLE RESULTS)
-                    if (sArray.length > 1) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                        builder.setTitle("Make a selection");
-
-                        //SET THE ITEMS FOR THE USER TO CHOOSE FROM
-                        String[] finalSArray = sArray;
-                        builder.setItems(sArray, (dialog, which) -> {
-                            Log.d("DialogWorker", "--setting items closure");
-                            try {
-                                JSONObject obj = (JSONObject) jary.getJSONObject(which);
-                                //PARSE THE TICKER/COMPANY RESULT INTO 2 PARTS
-                                String choice = finalSArray[which];
-                                completion.getResult(choice.split(" -")[0]);
-                            } catch (JSONException rjex) {
-                                Log.d("DialogWorker", "--A json parsing error occurred: " + rjex.getMessage());
-                            } catch (Exception ex) {
-                                Log.d("DialogWorker", "--An unexpected error occurred: " + ex.getMessage());
-                            }
-                        });
-
-                        builder.setNegativeButton("Nevermind", (dialog, id) -> {
-                        });
-
-                        activity.runOnUiThread(() -> {
-                            Log.d("DialogWorker", "--creating dialog to show");
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                            Log.d("DialogWorker", "--showing the dialog");
-                        });
-                    //IF ONLY ONE RESULT WAS FOUND, JUST RETURN IT
-                    } else {
+                    if (sArray.length == 1) {
                         completion.getResult(searchString);
+                    }else {
+                        populateChoices(sArray, searchString, completion);
                     }
+
                 } catch (JSONException jex) {
                     Log.d("DialogWorker", "--A json parsing error occurred: " + jex.getMessage());
                 }
@@ -83,5 +62,69 @@ public class DialogWorker {
         });
 
         new Thread(worker).start();
+    }
+    private void convertJaryToHash(JSONArray jary) {
+        for(int i = 0 ; i < jary.length(); i++) {
+            JSONObject obj = null;
+            try {
+                obj = (JSONObject) jary.getJSONObject(i);
+                String symbol = obj.getString("symbol");
+                String name = obj.getString("name");
+                stocks.put(new Stock(symbol, name));
+                //Log.d("DialogWorker", "Just put symbol " + symbol + " to the list");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private String[] filter( String searchString) {
+        //FILTER THE JSON RESPONSE (LIST OF TICKERS) PER YOUR SEARCH
+        ArrayList<String> tempArray = new ArrayList<String>();
+
+        for (String symbol: stocks.keys()) {
+            ///Log.d("DialogWorker", "searching for " + searchString + " in " + symbol);
+            if (symbol.startsWith(searchString)){
+                tempArray.add(symbol + " - " + stocks.getByKey(symbol).companyName);
+            }
+        }
+
+        String[] sArray = new String[tempArray.size()];
+        sArray = tempArray.toArray(sArray);
+        return sArray;
+    }
+    private void launchCachedDialog(String searchString, CompletionHandler completion) {
+        populateChoices(stocks.keyArray(), searchString, completion);
+    }
+
+    private void populateChoices(String[] sArray, String searchString, CompletionHandler completion) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle("Make a selection");
+
+        //SET THE ITEMS FOR THE USER TO CHOOSE FROM
+        String[] finalSArray = sArray;
+        builder.setItems(sArray, (dialog, which) -> {
+            Log.d("DialogWorker", "--setting items closure");
+            try {
+                //JSONObject obj = (JSONObject) jary.getJSONObject(which);
+                //PARSE THE TICKER/COMPANY RESULT INTO 2 PARTS
+                String choice = finalSArray[which];
+                completion.getResult(choice.split(" -")[0]);
+            } catch (Exception ex) {
+                Log.d("DialogWorker", "--An unexpected error occurred: " + ex.getMessage());
+            }
+        });
+
+        builder.setNegativeButton("Nevermind", (dialog, id) -> {
+        });
+
+        activity.runOnUiThread(() -> {
+            Log.d("DialogWorker", "--creating dialog to show");
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            Log.d("DialogWorker", "--showing the dialog");
+        });
     }
 }

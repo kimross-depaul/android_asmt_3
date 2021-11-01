@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 public class Stock {
-    String symbol;
-    String companyName;
+    public String symbol;
+    public String companyName;
     Double latestPrice;
     Double change;
     Double changePercent;
@@ -27,5 +27,9 @@ public class Stock {
         latestPrice = 0.0;
         change = 0.0;
         changePercent = 0.0;
+    }
+    public Stock(String _symbol, String _companyName) {
+        this.symbol = _symbol;
+        this.companyName = _companyName;
     }
 }

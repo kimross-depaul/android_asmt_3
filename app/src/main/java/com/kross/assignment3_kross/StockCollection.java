@@ -53,6 +53,9 @@ public class StockCollection {
     public Set<String> keys() {
         return stocks.keySet();
     }
+    public String[] keyArray() {
+        return keyOrder;
+    }
     public boolean containsKey(String key) {
         return stocks.containsKey(key);
     }
