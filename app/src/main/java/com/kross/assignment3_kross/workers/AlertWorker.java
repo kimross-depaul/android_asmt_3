@@ -42,8 +42,8 @@ public class AlertWorker {
                           DialogInterface.OnClickListener okBehavior) {
         okCancel(activity, title, message, okBehavior, null, "OK", "", null);
     }
-    public static void info(Activity activity, String title, String message) {
-        okCancel(activity, title, message, null, null, "", "", null);
+    public static void info(Activity activity, String title, String message, Integer icon) {
+        okCancel(activity, title, message, null, null, "", "", icon);
     }
 
     public static void input(Activity activity, String title, String message,

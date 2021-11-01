@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (result != null && result != "") {
                     addStock(result);
                 }else {
-                    AlertWorker.info( MainActivity.this, "No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" );
+                    AlertWorker.info( MainActivity.this, "No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
                 }
             });
             new Thread(worker).start();
@@ -102,8 +102,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void addStock(String json) {
         try {
             JSONObject obj = new JSONObject(json);
-            if (stockExists(obj.getString("symbol"))) {
+            String thisSymbol = obj.getString("symbol");
+            if (stockExists(thisSymbol)) {
                 Log.d("MainActivity", "--This stock already exists");// TODO
+                AlertWorker.info(MainActivity.this, "Duplicate Stock", "Stock Symbol " + thisSymbol + " is already displayed", R.drawable.ic_baseline_warning_24);
                 return;
             }
             createTableRow(obj);
@@ -122,9 +124,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Stock stock = new Stock(symbol, companyName, latestPrice, change, changePercent);
             stocks.put(stock);
             runOnUiThread(() -> {
-                Log.d("MainActivity", "--Refreshing the adapter in place " + (stocks.size()-1));
-                //adapter.notifyItemInserted(stocks.size() - 1);
-                adapter.setNeedsReorder();
                 adapter.notifyDataSetChanged();
             });
         } catch (JSONException e) {
@@ -141,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (result != null) {
                 refreshEachStock(result);
             }else {
-                AlertWorker.info( MainActivity.this,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" );
+                AlertWorker.info( MainActivity.this,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
             }
             swipeRefresh.setRefreshing(false);
         });

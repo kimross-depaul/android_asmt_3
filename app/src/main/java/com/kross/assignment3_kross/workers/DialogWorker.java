@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
-
+import com.kross.assignment3_kross.R;
 import com.kross.assignment3_kross.MainActivity;
 
 import org.json.JSONArray;
@@ -37,7 +37,7 @@ public class DialogWorker {
                     sArray = tempArray.toArray(sArray);
 
                     if (!foundOne) {
-                        AlertWorker.info(activity, "Symbol Not Found:  " + searchString, "Data for stock symbol");
+                        AlertWorker.info(activity, "Symbol Not Found:  " + searchString, "Data for stock symbol", null);
                         completion.getResult("");
                         return;
                     }
@@ -72,7 +72,7 @@ public class DialogWorker {
                     Log.d("DialogWorker", "--A json parsing error occurred: " + jex.getMessage());
                 }
             } else {
-                AlertWorker.info( activity,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" );
+                AlertWorker.info( activity,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
             }
         });
 

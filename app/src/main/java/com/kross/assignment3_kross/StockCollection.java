@@ -48,6 +48,7 @@ public class StockCollection {
     }
     public void put(Stock stock) {
         stocks.put(stock.symbol, stock);
+        reOrder();
     }
     public Set<String> keys() {
         return stocks.keySet();
