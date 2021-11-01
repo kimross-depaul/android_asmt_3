@@ -14,6 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class DialogWorker {
@@ -70,7 +71,7 @@ public class DialogWorker {
                 obj = (JSONObject) jary.getJSONObject(i);
                 String symbol = obj.getString("symbol");
                 String name = obj.getString("name");
-                stocks.put(new Stock(symbol, name));
+                stocks.put(new Stock(symbol, name), false);
                 //Log.d("DialogWorker", "Just put symbol " + symbol + " to the list");
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -78,11 +79,17 @@ public class DialogWorker {
                 ex.printStackTrace();
             }
         }
+        stocks.reOrder();
     }
 
     private String[] filter( String searchString) {
         //FILTER THE JSON RESPONSE (LIST OF TICKERS) PER YOUR SEARCH
         ArrayList<String> tempArray = new ArrayList<String>();
+        String[] temp = stocks.keyArray();
+        temp = Arrays.stream(temp).filter(s -> s.startsWith(searchString)).toArray(String[]::new);
+        return temp;
+/*
+        Log.d("DialogWorker", "-------temp[0]" + temp[0]);
 
         for (String symbol: stocks.keys()) {
             ///Log.d("DialogWorker", "searching for " + searchString + " in " + symbol);
@@ -93,10 +100,13 @@ public class DialogWorker {
 
         String[] sArray = new String[tempArray.size()];
         sArray = tempArray.toArray(sArray);
-        return sArray;
+        return sArray;*/
     }
     private void launchCachedDialog(String searchString, CompletionHandler completion) {
-        populateChoices(stocks.keyArray(), searchString, completion);
+        Log.d("DialogWorker", "--BEFORE populating cached choices: " + stocks.keyArray());
+        Log.d("DialogWorker", "--stocks[0].name" + stocks.getByIndex(0).companyName);
+        String[] sArray = filter(searchString);
+        populateChoices(sArray, searchString, completion);
     }
 
     private void populateChoices(String[] sArray, String searchString, CompletionHandler completion) {
@@ -108,8 +118,6 @@ public class DialogWorker {
         builder.setItems(sArray, (dialog, which) -> {
             Log.d("DialogWorker", "--setting items closure");
             try {
-                //JSONObject obj = (JSONObject) jary.getJSONObject(which);
-                //PARSE THE TICKER/COMPANY RESULT INTO 2 PARTS
                 String choice = finalSArray[which];
                 completion.getResult(choice.split(" -")[0]);
             } catch (Exception ex) {

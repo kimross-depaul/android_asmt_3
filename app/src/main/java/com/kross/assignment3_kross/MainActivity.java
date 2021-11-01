@@ -83,7 +83,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
-    //TODO need to have this NOT launch a new GET if namedownloader already has cached data
     private void addTicker(String searchString) {
         dialogWorker.list(searchString, (choice) -> {
             Log.d("MainActivity", "--Got the result " + choice);

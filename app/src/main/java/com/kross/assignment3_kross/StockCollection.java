@@ -7,6 +7,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
@@ -16,6 +17,7 @@ public class StockCollection {
     private final HashMap<String, Stock> stocks;
     private String[] keyOrder = new String[0];
     private boolean needsReorder = false;
+    private String[] cache;
 
     public StockCollection(HashMap<String, Stock> stockList) {
         stocks = stockList;
@@ -46,15 +48,25 @@ public class StockCollection {
         }
         return sb.toString();
     }
-    public void put(Stock stock) {
+    public void put(Stock stock, boolean shouldReorder) {
         stocks.put(stock.symbol, stock);
-        reOrder();
+        if (shouldReorder) reOrder();
+    }
+    public void put(Stock stock) {
+        put(stock, true);
     }
     public Set<String> keys() {
         return stocks.keySet();
     }
     public String[] keyArray() {
-        return keyOrder;
+        if (cache == null) {
+            ArrayList<String> temp = new ArrayList<String>();
+            for (String key : keyOrder) {
+                temp.add(key + " - " + getByKey(key).companyName);
+            }
+            cache = temp.toArray(new String[0]);
+        }
+        return cache;
     }
     public boolean containsKey(String key) {
         return stocks.containsKey(key);
