@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.view.Gravity;
 import android.widget.EditText;
@@ -55,6 +56,7 @@ public class AlertWorker {
         et.setInputType(InputType.TYPE_CLASS_TEXT);
         et.setGravity(Gravity.CENTER_HORIZONTAL);
         et.setId(R.id.inputSymbol);
+        et.setFilters(new InputFilter[] {new InputFilter.AllCaps()});
 
         builder.setView(et);
 

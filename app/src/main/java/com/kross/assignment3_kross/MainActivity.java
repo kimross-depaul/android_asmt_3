@@ -81,14 +81,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void addTicker(String searchString) {
         DialogWorker.list(this, searchString, (choice) -> {
             Log.d("MainActivity", "--Got the result " + choice);
-            //Do other network call
-
-            Log.d("MainActivity", "-- getting details for choice");
             NetworkWorker worker = new NetworkWorker(KeyWorker.getStockUrl(choice), (result) -> {
                 if (result != null && result != "") {
                     addStock(result);
-                }else {
+                } else if (result == "!") {
                     AlertWorker.info( MainActivity.this, "No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
+                } else {
+                    Log.d("MainActivity", "-- Could not add this ticker.");
                 }
             });
             new Thread(worker).start();
@@ -104,7 +103,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             JSONObject obj = new JSONObject(json);
             String thisSymbol = obj.getString("symbol");
             if (stockExists(thisSymbol)) {
-                Log.d("MainActivity", "--This stock already exists");// TODO
                 AlertWorker.info(MainActivity.this, "Duplicate Stock", "Stock Symbol " + thisSymbol + " is already displayed", R.drawable.ic_baseline_warning_24);
                 return;
             }
@@ -169,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // ------------------ MENU ITEMS ---------------------
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) { //TODO
-        AlertWorker.input(MainActivity.this, "StockSelection", "Please enter a Stock Symbol:", (result) -> {
+        AlertWorker.input(MainActivity.this, "Stock Selection", "Please enter a Stock Symbol:", (result) -> {
             Log.d("MainActivity", result);
             addTicker(result);
         });

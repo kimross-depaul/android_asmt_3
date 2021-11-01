@@ -34,7 +34,7 @@ public class NetworkWorker implements Runnable {
 
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 Log.d("NetworkWorker", "--Invalid response: " + conn.getResponseCode());
-                callback.getResult(null);
+                callback.getResult("!");
                 return;
             }
 
@@ -56,7 +56,7 @@ public class NetworkWorker implements Runnable {
         } catch(Exception ex) {
             //AlertWorker.ok()
             Log.d("NetworkWorker", "--An Error occurred: " + ex.getMessage());
-            callback.getResult(null);
+            callback.getResult("!");
         }
     }
 }
