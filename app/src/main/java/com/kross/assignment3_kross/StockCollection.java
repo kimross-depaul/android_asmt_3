@@ -18,10 +18,6 @@ public class StockCollection {
     private String[] keyOrder = new String[0];
     private boolean needsReorder = false;
     private String[] cache;
-/*
-    public StockCollection(HashMap<String, Stock> stockList) {
-        stocks = stockList;
-    }*/
 
     // CONSTRUCTOR
     public StockCollection() {
@@ -76,7 +72,7 @@ public class StockCollection {
     public String getDelimitedSymbols() {
         StringBuilder sb = new StringBuilder();
         for (String symbol: stocks.keySet()) {
-            sb.append(symbol + ",");
+            sb.append(symbol.replace("+", "%2B") + ",");
         }
         return sb.toString();
     }

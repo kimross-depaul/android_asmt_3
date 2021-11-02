@@ -50,8 +50,19 @@ public class StockDownloader implements Runnable {
             JSONObject root = new JSONObject(json);
 
             for (String symbol: stocks.keys()) {
+                JSONObject thisStock;
                 Stock stock = stocks.getByKey(symbol);
-                JSONObject thisStock = (JSONObject) root.get(stock.symbol);
+                thisStock = (JSONObject) root.get(stock.symbol);
+                /*try{
+
+                }catch (JSONException charex){
+                    Log.d("StockDownloader", "-- stock.symbol is " + stock.symbol + ", symbol is " + symbol);
+                    thisStock = (JSONObject) root.get(symbol + "+");
+                }
+                if (root.get(stock.symbol) == null) {
+
+                }*/
+
                 JSONObject quote = (JSONObject) thisStock.get("quote");
                 Stock freshStock = new Stock(quote.getString("symbol"), quote.getString("companyName"), quote.getDouble("latestPrice"), quote.getDouble("change"), quote.getDouble("changePercent"));
                 stocks.put(freshStock);
@@ -60,7 +71,7 @@ public class StockDownloader implements Runnable {
                 activity.adapter.notifyDataSetChanged();
             });
         } catch (JSONException jex) {
-            AlertWorker.info(activity, "Uh oh!", "Something happened:  " + jex.getMessage(), null);
+            AlertWorker.info(activity, "Uh oh!", "(1) Something happened:  " + jex.getMessage(), null);
         }
     }
 }

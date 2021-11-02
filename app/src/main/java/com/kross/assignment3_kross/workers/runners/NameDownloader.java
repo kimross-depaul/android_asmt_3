@@ -92,9 +92,9 @@ public class NameDownloader {
         }
         //RETURN YOUR SEARCH STRING IF ONLY ONE RESULT
         if (sArray.length == 1) {
-            completion.getResult(searchString);
+            completion.getResult(sArray[0].split(" -")[0]);
 
-            //ASK THE USER TO NARROW THE CHOICE
+        //ASK THE USER TO NARROW THE CHOICE
         }else {
             populateChoices(sArray, searchString, completion);
         }

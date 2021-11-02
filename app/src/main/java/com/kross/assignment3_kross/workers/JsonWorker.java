@@ -33,6 +33,7 @@ public class JsonWorker {
             String line;
             StringBuilder sb = new StringBuilder("");
             while ((line = reader.readLine()) != null) {
+                Log.d("JsonWorker", "--" + line);
                 sb.append(line);
             }
             JSONArray jsonArray = new JSONArray(sb.toString());
@@ -44,7 +45,9 @@ public class JsonWorker {
                 Stock newStock = new Stock(symbol, name);
                 stockCol.put(newStock);
             }
-            activity.swipeRefresh.setRefreshing(false);
+
+            if (activity.swipeRefresh != null)
+                activity.swipeRefresh.setRefreshing(false);
         } catch(Exception ex){
             Log.d("JsonWorker", "No existing stocks were saved");
         }

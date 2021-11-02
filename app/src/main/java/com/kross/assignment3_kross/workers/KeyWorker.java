@@ -1,6 +1,7 @@
 package com.kross.assignment3_kross.workers;
 
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
@@ -11,6 +12,7 @@ public class KeyWorker {
     private static final String STOCK_BATCH_URL_PREFIX = "/market/batch?symbols=";
     private static final String STOCK_BATCH_URl_SUFFIX = "&types=quote&token=";
     private static final String STOCK_API_KEY = "pk_06c54217ded5495a911f9230cd4e79ec";
+    private static final String MARKET_URL_BASE = "https://www.marketwatch.com/investing/stock/";
 
     public static String getTickerUrl() {
         return TICKER_URL;
@@ -22,5 +24,8 @@ public class KeyWorker {
     //Expects a comma-delimited list of symbols
     public static String getStockBatchUrl(String symbols) {
         return STOCK_URL_BASE + STOCK_BATCH_URL_PREFIX + symbols + STOCK_BATCH_URl_SUFFIX + STOCK_API_KEY;
+    }
+    public static String getWebUrl(String symbol) {
+        return MARKET_URL_BASE + symbol.replace("+", "%2B");
     }
 }

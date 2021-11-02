@@ -6,6 +6,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -61,10 +63,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
-       /* setContentView(R.layout.webview);
-        webView = (WebView) findViewById(R.id.webView);
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl("http://www.marketwatch.com/investing/stock/TSLA");*/
+        int pos = recyclerView.getChildLayoutPosition(view);
+        String symbol = stockDownloader.stocks.getByIndex(pos).symbol;
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(KeyWorker.getWebUrl(symbol)));
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }else{
+            AlertWorker.ok(this,"Hmm", "Unable to open the marketwatch site", null);
+        }
     }
 
     @Override
@@ -74,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         AlertWorker.okToDelete(MainActivity.this, "Delete Stock", "Delete Stock Symbol " + stock.symbol + "?", (dialog, id) -> {
             stockDownloader.stocks.remove(pos);
             adapter.notifyItemRemoved(pos);
+            JsonWorker.save(stockDownloader.stocks, this);
         }, (dialog, id) -> {
             //Cancelled - just return
         });
@@ -85,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d("MainActivity", "--Got the result " + choice);
             NetworkWorker worker = new NetworkWorker(KeyWorker.getStockUrl(choice), (result) -> {
                 Log.d("MainActivity", "---THIS IS WHAT I GOT" + result);
-                if (result != null && result != "") {
+                if (result != null && result != "" && result != "!") {
                     addStock(result);
                 } else if (result == "!") {
                     AlertWorker.info( MainActivity.this, "No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
