@@ -5,6 +5,6 @@
     <item
         android:id="@+id/menuAdd"
         android:icon="@android:drawable/ic_menu_add"
-        android:title="Add"
+        android:title="Add Stock"
         app:showAsAction="always" />
 </menu>

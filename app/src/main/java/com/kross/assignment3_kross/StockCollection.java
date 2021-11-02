@@ -18,35 +18,47 @@ public class StockCollection {
     private String[] keyOrder = new String[0];
     private boolean needsReorder = false;
     private String[] cache;
-
+/*
     public StockCollection(HashMap<String, Stock> stockList) {
         stocks = stockList;
-    }
+    }*/
+
+    // CONSTRUCTOR
     public StockCollection() {
         stocks = new HashMap<String, Stock>();
     }
+
+    // SORTING
     public void reOrder() {
         keyOrder = stocks.keySet().toArray(new String[0]);
         Arrays.sort(keyOrder);
         needsReorder = false;
     }
+    public void setNeedsReorder() {
+        needsReorder = true;
+    }
+    public void reOrderIfNecessary() {
+        if (needsReorder) {
+            reOrder();
+        }
+    }
+
+    // FINDING ELEMENTS BY ID OR KEY
     public Stock getByIndex(int position) {
         return stocks.get(keyOrder[position]);
     }
     public Stock getByKey(String key){
         return stocks.get(key);
     }
+    public boolean containsKey(String key) {
+        return stocks.containsKey(key);
+    }
+
+    // CRUD OPERATIONS
     public void remove(int position) {
         String key = keyOrder[position];
         stocks.remove(key);
         reOrder();
-    }
-    public String getDelimitedSymbols() {
-        StringBuilder sb = new StringBuilder();
-        for (String symbol: stocks.keySet()) {
-            sb.append(symbol + ",");
-        }
-        return sb.toString();
     }
     public void put(Stock stock, boolean shouldReorder) {
         stocks.put(stock.symbol, stock);
@@ -55,6 +67,21 @@ public class StockCollection {
     public void put(Stock stock) {
         put(stock, true);
     }
+    public void clear() {
+        stocks.clear();
+        reOrder();
+    }
+
+    // CONVENIENCE FOR BATCH PROCESSING ENDPOINT
+    public String getDelimitedSymbols() {
+        StringBuilder sb = new StringBuilder();
+        for (String symbol: stocks.keySet()) {
+            sb.append(symbol + ",");
+        }
+        return sb.toString();
+    }
+
+    // RETURNS
     public Set<String> keys() {
         return stocks.keySet();
     }
@@ -68,23 +95,11 @@ public class StockCollection {
         }
         return cache;
     }
-    public boolean containsKey(String key) {
-        return stocks.containsKey(key);
-    }
     public int size() {
         return stocks.size();
     }
 
-    public void setNeedsReorder() {
-        needsReorder = true;
-    }
-
-    public void reOrderIfNecessary() {
-        if (needsReorder) {
-            reOrder();
-        }
-    }
-
+    // FOR JSON WRITING
     @NonNull
     @Override
     public String toString() {
@@ -95,6 +110,7 @@ public class StockCollection {
             for (String key: keyOrder) {
                 jsonWriter.beginObject();
                 jsonWriter.name("symbol").value(key);
+                jsonWriter.name("companyName").value(getByKey(key).companyName);
                 jsonWriter.endObject();
             }
             jsonWriter.endArray();

@@ -27,6 +27,7 @@ public class NameDownloader {
         stocks = new StockCollection();
     }
 
+    // LAUNCH EITHER THE DOWNLOADED OR CACHED LIST OF TICKERS
     public void list(String searchString, CompletionHandler completion) {
         if (stocks.size() == 0) {
             launchDialog(searchString, completion);
@@ -35,6 +36,7 @@ public class NameDownloader {
         }
     }
 
+    // FIRST-TIME LOADING DIALOG
     private void launchDialog(String searchString, CompletionHandler completion) {
         NetworkWorker worker = new NetworkWorker(KeyWorker.getTickerUrl(), (result) -> {
             if (result != null && result != "!") {
@@ -43,20 +45,10 @@ public class NameDownloader {
                     convertJaryToHash(jary);
                     String[] sArray = filter(searchString);
 
-                    //REPORT IF NOTHING MATCHES YOUR SEARCH
-                    if (sArray.length == 0) {
-                        AlertWorker.info(activity, "Symbol Not Found:  " + searchString, "Data for stock symbol", null);
-                        completion.getResult("");
-                        return;
-                    }
-                    if (sArray.length == 1) {
-                        completion.getResult(searchString);
-                    }else {
-                        populateChoices(sArray, searchString, completion);
-                    }
+                    handleFilteredChoices(sArray, searchString, completion);
 
                 } catch (JSONException jex) {
-                    Log.d("DialogWorker", "--A json parsing error occurred: " + jex.getMessage());
+                    AlertWorker.info(activity, "Uh oh!", "Something happened:  " + jex.getMessage(), null);
                 }
             } else {
                 AlertWorker.info( activity,"No Network Connection", "Stocks Cannot Be Updated Without a Network Connection" , null);
@@ -65,6 +57,16 @@ public class NameDownloader {
 
         new Thread(worker).start();
     }
+
+    // SUBSEQUENT LOADS - PULL CACHED RESULTS
+    private void launchCachedDialog(String searchString, CompletionHandler completion) {
+        String[] sArray = filter(searchString);
+        handleFilteredChoices(sArray, searchString, completion);
+    }
+
+    // -----------------------------------------------------
+    // --------------- CONVENIENCE METHODS -----------------
+    // -----------------------------------------------------
     private void convertJaryToHash(JSONArray jary) {
         for(int i = 0 ; i < jary.length(); i++) {
             JSONObject obj = null;
@@ -73,7 +75,6 @@ public class NameDownloader {
                 String symbol = obj.getString("symbol");
                 String name = obj.getString("name");
                 stocks.put(new Stock(symbol, name), false);
-                //Log.d("DialogWorker", "Just put symbol " + symbol + " to the list");
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (Exception ex) {
@@ -82,21 +83,32 @@ public class NameDownloader {
         }
         stocks.reOrder();
     }
+    private void handleFilteredChoices(String[] sArray, String searchString, CompletionHandler completion) {
+        //REPORT IF NOTHING MATCHES YOUR SEARCH
+        if (sArray.length == 0) {
+            AlertWorker.info(activity, "Symbol Not Found:  " + searchString, "Data for stock symbol", null);
+            completion.getResult("");
+            return;
+        }
+        //RETURN YOUR SEARCH STRING IF ONLY ONE RESULT
+        if (sArray.length == 1) {
+            completion.getResult(searchString);
 
+            //ASK THE USER TO NARROW THE CHOICE
+        }else {
+            populateChoices(sArray, searchString, completion);
+        }
+    }
+
+    // NARROW DOWN THE TICKER CHOICES
     private String[] filter( String searchString) {
-        //FILTER THE JSON RESPONSE (LIST OF TICKERS) PER YOUR SEARCH
         ArrayList<String> tempArray = new ArrayList<String>();
         String[] temp = stocks.keyArray();
         temp = Arrays.stream(temp).filter(s -> s.startsWith(searchString)).toArray(String[]::new);
         return temp;
     }
-    private void launchCachedDialog(String searchString, CompletionHandler completion) {
-        Log.d("DialogWorker", "--BEFORE populating cached choices: " + stocks.keyArray());
-        Log.d("DialogWorker", "--stocks[0].name" + stocks.getByIndex(0).companyName);
-        String[] sArray = filter(searchString);
-        populateChoices(sArray, searchString, completion);
-    }
 
+    // ADD THE TICKERS TO THE DIALOG CHOICES
     private void populateChoices(String[] sArray, String searchString, CompletionHandler completion) {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle("Make a selection");
@@ -104,23 +116,21 @@ public class NameDownloader {
         //SET THE ITEMS FOR THE USER TO CHOOSE FROM
         String[] finalSArray = sArray;
         builder.setItems(sArray, (dialog, which) -> {
-            Log.d("DialogWorker", "--setting items closure");
             try {
                 String choice = finalSArray[which];
                 completion.getResult(choice.split(" -")[0]);
             } catch (Exception ex) {
-                Log.d("DialogWorker", "--An unexpected error occurred: " + ex.getMessage());
+                AlertWorker.info(activity, "Uh oh!", "Something happened:  " + ex.getMessage(), null);
             }
         });
 
         builder.setNegativeButton("Nevermind", (dialog, id) -> {
+            // Just return
         });
 
         activity.runOnUiThread(() -> {
-            Log.d("DialogWorker", "--creating dialog to show");
             AlertDialog dialog = builder.create();
             dialog.show();
-            Log.d("DialogWorker", "--showing the dialog");
         });
     }
 }

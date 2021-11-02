@@ -50,11 +50,8 @@ public class NetworkWorker implements Runnable {
             is.close();
             conn.disconnect();
 
-            Log.d("NetworkWorker", "--" + "closed connection");
-
             callback.getResult(sb.toString());
         } catch(Exception ex) {
-            //AlertWorker.ok()
             Log.d("NetworkWorker", "--An Error occurred: " + ex.getMessage());
             callback.getResult("!");
         }

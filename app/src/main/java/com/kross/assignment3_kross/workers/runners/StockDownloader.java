@@ -25,11 +25,13 @@ public class StockDownloader implements Runnable {
         refreshStocks();
     }
 
+    // REFRESH THE EXISTING TICKERS WITH STOCK INFO
     public void refreshStocks() {
         String delimitedStocks = stocks.getDelimitedSymbols();
-        Log.d("MainActivity", KeyWorker.getStockBatchUrl(delimitedStocks));
         if (delimitedStocks == "")
             return;
+
+        //  RATHER THAN HIT EACH ENDPOINT, THIS PULLS A BATCH FROM A DIFFERENT ENDPOINT
         NetworkWorker worker = new NetworkWorker(KeyWorker.getStockBatchUrl(delimitedStocks), (result) -> {
             if (result != null && result != "!") {
                 refreshEachStock(result);
@@ -41,6 +43,8 @@ public class StockDownloader implements Runnable {
 
         new Thread(worker).start();
     }
+
+    // THIS REFRESHES EACH ONE
     private void refreshEachStock(String json) {
         try {
             JSONObject root = new JSONObject(json);
@@ -56,7 +60,7 @@ public class StockDownloader implements Runnable {
                 activity.adapter.notifyDataSetChanged();
             });
         } catch (JSONException jex) {
-            Log.d("MainActivity", "-- Couldn't read batch:  " + jex.getMessage());
+            AlertWorker.info(activity, "Uh oh!", "Something happened:  " + jex.getMessage(), null);
         }
     }
 }

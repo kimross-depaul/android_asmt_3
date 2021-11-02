@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 
 import com.kross.assignment3_kross.workers.runners.NameDownloader;
 import com.kross.assignment3_kross.workers.JsonWorker;
@@ -31,6 +32,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public StockAdapter adapter;
     public SwipeRefreshLayout swipeRefresh;
 
+    private WebView webView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         swipeRefresh = findViewById(R.id.swipeRefresh);
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             public void onRefresh() {
+                stockDownloader.stocks.clear();
+                JsonWorker.load(MainActivity.this, stockDownloader.stocks);
                 new Thread(stockDownloader).start();
             }
         });
@@ -55,14 +60,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        JsonWorker.save(stockDownloader.stocks, this); //TODO
-    }
-
-    @Override
     public void onClick(View view) {
-
+       /* setContentView(R.layout.webview);
+        webView = (WebView) findViewById(R.id.webView);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.loadUrl("http://www.marketwatch.com/investing/stock/TSLA");*/
     }
 
     @Override
@@ -122,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Double changePercent = obj.getDouble("changePercent");
             Stock stock = new Stock(symbol, companyName, latestPrice, change, changePercent);
             stockDownloader.stocks.put(stock);
+            JsonWorker.save(stockDownloader.stocks, this);
             runOnUiThread(() -> {
                 adapter.notifyDataSetChanged();
             });
@@ -129,9 +132,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }
     }
-
-
-
 
     // ------------------ MENU ITEMS ---------------------
     @Override

@@ -16,13 +16,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.kross.assignment3_kross.MainActivity;
 import com.kross.assignment3_kross.Stock;
 import com.kross.assignment3_kross.StockCollection;
 
 public class JsonWorker {
     private final static String FILENAME = "Stocks.json";
 
-    public static void load(Activity activity, StockCollection stockCol) {
+    // READ THE JSON FILE
+    public static void load(MainActivity activity, StockCollection stockCol) {
         try {
             //activity.getApplicationContext().deleteFile(FILENAME);
             InputStream is = activity.getApplicationContext().openFileInput(FILENAME);
@@ -31,7 +33,6 @@ public class JsonWorker {
             String line;
             StringBuilder sb = new StringBuilder("");
             while ((line = reader.readLine()) != null) {
-                Log.d("JsonWorker", "-- line:" + line);
                 sb.append(line);
             }
             JSONArray jsonArray = new JSONArray(sb.toString());
@@ -39,16 +40,19 @@ public class JsonWorker {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 String symbol = jsonObject.getString("symbol");
-                Stock newStock = new Stock(symbol);
+                String name = jsonObject.getString("companyName");
+                Stock newStock = new Stock(symbol, name);
                 stockCol.put(newStock);
             }
+            activity.swipeRefresh.setRefreshing(false);
         } catch(Exception ex){
-            Log.d("NoteWorker", "--Unable to load json file " + FILENAME + ":  " + ex.getMessage());
+            Log.d("JsonWorker", "No existing stocks were saved");
         }
     }
+
+    // WRITE TO THE JSON FILE
     public static void save(StockCollection stockCol, Activity activity) {
         try {
-            Log.d("JsonWorker", "--SAVING TO DISK");
             FileOutputStream fos = activity.getApplicationContext().
                     openFileOutput(FILENAME, Context.MODE_PRIVATE);
 
@@ -58,7 +62,7 @@ public class JsonWorker {
             printWriter.close();
             fos.close();
         }catch (Exception ex){
-            Log.d("NoteWorker", "--Unable to save json file " + FILENAME + ":  " + ex.getMessage());
+            AlertWorker.info(activity, "Uh oh!", "Something happened:  " + ex.getMessage(), null);
         }
     }
 }
